@@ -1,52 +1,28 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8;
+//SPDX-License-Identifier: MIT
 
-import {IERC20} from "../lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+pragma solidity ^0.8.0;
 
+import {TokenIERC} from "./TokenIERC20.sol";
 contract TokenLaunchpad {
+    // Event to log the creation of a new token
+    event TokenCreated(address indexed tokenAddress, string name, string symbol, uint8 decimals, uint256 totalSupply);
 
-    // Token struct
-    struct Token {
-        uint256 tokenPrice;
-        uint256 tokenSupply;
-        uint256 tokenSold;
-        address tokenAddress; 
-        address tokenOwner;
-        bool tokenStatus;
+    /**
+     * @dev Function to create a new token using the TokenIERC contract
+     * @param name The name of the token
+     * @param symbol The symbol of the token
+     * @param decimals The number of decimals the token uses
+     * @param totalSupply The total supply of the token
+     * @return The address of the newly created token
+     */
+    function createToken(
+        string memory name,
+        string memory symbol,
+        uint8 decimals,
+        uint256 totalSupply
+    ) external returns (address) {
+        TokenIERC token = new TokenIERC(name, symbol, decimals, totalSupply); // Create a new token
+        emit TokenCreated(address(token), name, symbol, decimals, totalSupply); // Emit an event to log the creation of a new token
+        return address(token); // Return the address of the newly created token
     }
-
-    // token ID
-    uint256 public tokenID;
-
-    //token ampping to store token details using ids
-    mapping(uint256 => Token) public tokens;
-
-    function mintToken(
-        unint256 tokenPrice,
-        uint256 tokenSupply,
-        address tokenAddress
-
-    )  returns (bool) {
-        tokenID++;
-        Token memory newToken = Token(
-            tokenPrice,
-            tokenSupply,
-            0,
-            tokenAddress,
-            tx.origin,
-            true
-        );
-        tokens[tokenID] = newToken;
-        return true;
-    }
-
-    function buyToken(uint256 _tokenID, uint256 _tokenAmount) public payable {
-        Token storage token = tokens[_tokenID];
-        require(token.tokenStatus, "Token is not available");
-        require(token.tokenSold + _tokenAmount <= token.tokenSupply, "Token is not available");
-        require(msg.value == token.tokenPrice * _tokenAmount, "Invalid amount");
-        IERC20(token.tokenAddress).transfer(msg.sender, _tokenAmount);
-        token.tokenSold += _tokenAmount;
-    }
-
 }
